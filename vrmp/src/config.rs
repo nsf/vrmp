@@ -15,6 +15,12 @@ pub struct Config {
     pub ui_angle: f32,
     #[serde(default = "default_ui_scale")]
     pub ui_scale: f32,
+    #[serde(default = "default_camera_movement_speed")]
+    pub camera_movement_speed: f32,
+    #[serde(default = "default_camera_sensitivity")]
+    pub camera_sensitivity: f32,
+    #[serde(default = "default_cursor_sensitivity")]
+    pub cursor_sensitivity: f32,
 }
 
 fn default_favorite_directories() -> Vec<PathBuf> {
@@ -39,6 +45,18 @@ fn default_ui_angle() -> f32 {
 
 fn default_ui_scale() -> f32 {
     0.45
+}
+
+fn default_camera_movement_speed() -> f32 {
+    5.0
+}
+
+fn default_camera_sensitivity() -> f32 {
+    0.05
+}
+
+fn default_cursor_sensitivity() -> f32 {
+    1.0
 }
 
 impl Config {

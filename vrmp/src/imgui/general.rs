@@ -14,7 +14,7 @@ use super::util::{hex, iter_bit_spans};
 
 use indoc::indoc;
 
-pub struct VideoSettings {
+pub struct General {
     pub percent_pos: f64,
     pub duration: u32,
     pub shader_debug: f32,
@@ -26,9 +26,9 @@ pub struct VideoSettings {
     tmp_str: String,
 }
 
-impl VideoSettings {
-    pub fn new() -> VideoSettings {
-        VideoSettings {
+impl General {
+    pub fn new() -> General {
+        General {
             percent_pos: 0.0,
             duration: 0,
             shader_debug: 0.0,
@@ -331,6 +331,8 @@ impl VideoSettings {
                             stereo_button("+1°", 1.0, &mut fdata.stereo_convergence);
                         }
                     }
+
+                    // HWDEC
                     ui.align_text_to_frame_padding();
                     {
                         if ui.button(&self.hwdec) {
@@ -413,31 +415,59 @@ impl VideoSettings {
                     }
                 }
 
-                let mut ui_angle = config_syncer.get().ui_angle;
-                let mut ui_distance = config_syncer.get().ui_distance;
-                let mut ui_scale = config_syncer.get().ui_scale;
+                if ui.collapsing_header("Settings", imgui::TreeNodeFlags::empty()) {
+                    let mut ui_angle = config_syncer.get().ui_angle;
+                    let mut ui_distance = config_syncer.get().ui_distance;
+                    let mut ui_scale = config_syncer.get().ui_scale;
+                    let mut camera_movement_speed = config_syncer.get().camera_movement_speed;
+                    let mut camera_sensitivity = config_syncer.get().camera_sensitivity;
+                    let mut cursor_sensitivity = config_syncer.get().cursor_sensitivity;
 
-                if imgui::InputFloat::new(ui, "UI Angle", &mut ui_angle).step(1.0).build() {
-                    config_syncer.get_mut().ui_angle = ui_angle;
+                    if imgui::InputFloat::new(ui, "UI Angle", &mut ui_angle).step(1.0).build() {
+                        config_syncer.get_mut().ui_angle = ui_angle;
+                    }
+
+                    if imgui::InputFloat::new(ui, "UI Distance", &mut ui_distance)
+                        .step(0.01)
+                        .build()
+                    {
+                        config_syncer.get_mut().ui_distance = ui_distance;
+                    }
+
+                    if imgui::InputFloat::new(ui, "UI Scale", &mut ui_scale).step(0.01).build() {
+                        config_syncer.get_mut().ui_scale = ui_scale;
+                    }
+
+                    if imgui::InputFloat::new(ui, "Camera Movement Speed", &mut camera_movement_speed)
+                        .step(0.1)
+                        .build()
+                    {
+                        config_syncer.get_mut().camera_movement_speed = camera_movement_speed;
+                    }
+
+                    if imgui::InputFloat::new(ui, "Camera Sensitivity", &mut camera_sensitivity)
+                        .step(0.01)
+                        .build()
+                    {
+                        config_syncer.get_mut().camera_sensitivity = camera_sensitivity;
+                    }
+
+                    if imgui::InputFloat::new(ui, "Cursor Sensitivity", &mut cursor_sensitivity)
+                        .step(0.1)
+                        .build()
+                    {
+                        config_syncer.get_mut().cursor_sensitivity = cursor_sensitivity;
+                    }
                 }
 
-                if imgui::InputFloat::new(ui, "UI Distance", &mut ui_distance)
-                    .step(0.01)
-                    .build()
-                {
-                    config_syncer.get_mut().ui_distance = ui_distance;
-                }
+                if ui.collapsing_header("Debug", imgui::TreeNodeFlags::empty()) {
+                    imgui::Drag::new("Shader Debug")
+                        .speed(0.01)
+                        .build(ui, &mut self.shader_debug);
 
-                if imgui::InputFloat::new(ui, "UI Scale", &mut ui_scale).step(0.01).build() {
-                    config_syncer.get_mut().ui_scale = ui_scale;
-                }
-
-                imgui::Drag::new("Shader Debug")
-                    .speed(0.01)
-                    .build(ui, &mut self.shader_debug);
-
-                if ui.button("Show Demo") {
-                    self.show_demo = true;
+                    if ui.button("Show Demo") {
+                        self.show_demo = true;
+                    }
                 }
             });
 

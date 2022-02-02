@@ -7,6 +7,8 @@ use sdl2::{
     mouse::MouseButton,
 };
 
+use crate::config::Config;
+
 // virtual screen for UI
 
 pub struct VScreen {
@@ -109,13 +111,13 @@ impl VScreen {
         self.mouse_y = self.mouse_y.clamp(0.0, self.height as f32);
     }
 
-    pub fn imgui_handle_event(&mut self, context: &mut imgui::Context, event: &Event) {
+    pub fn imgui_handle_event(&mut self, context: &mut imgui::Context, event: &Event, cfg: &Config) {
         let io = context.io_mut();
 
         match *event {
             Event::MouseMotion { xrel, yrel, .. } => {
-                self.mouse_x += xrel as f32;
-                self.mouse_y += yrel as f32;
+                self.mouse_x += xrel as f32 * cfg.cursor_sensitivity;
+                self.mouse_y += yrel as f32 * cfg.cursor_sensitivity;
                 self.clamp_mouse_position();
             }
 

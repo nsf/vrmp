@@ -4,7 +4,7 @@ use glam::{Mat3, Mat4};
 use crate::{
     enums::{Mode, Projection},
     filedb::FileData,
-    imgui::video_settings::VideoSettings,
+    imgui::general::General,
 };
 
 #[repr(C)]
@@ -26,7 +26,7 @@ impl CameraState {
         world_origin: Mat4,
         eye_index: u32,
         fdata: Option<&FileData>,
-        video_settings: &VideoSettings,
+        g: &General,
     ) -> CameraState {
         let inverse_projection = proj_mat.inverse();
         let view_orientation = (view_mat * Mat4::from_mat3(Mat3::from_mat4(world_origin))).inverse();
@@ -55,7 +55,7 @@ impl CameraState {
             eye_index,
             mode,
             stereo_adjust: stereo_adjust,
-            shader_debug: video_settings.shader_debug,
+            shader_debug: g.shader_debug,
         }
     }
 }

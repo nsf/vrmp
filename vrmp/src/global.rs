@@ -23,7 +23,7 @@ use crate::{
     enums::{AspectRatio, Projection},
     filedb::FileDB,
     imgui::font_awesome,
-    imgui::{file_browser::ImguiFileBrowser, video_settings::VideoSettings},
+    imgui::{file_browser::ImguiFileBrowser, general::General},
     pipeline::{fullscreen_triangle::FullscreenTriangle, textured_quad::TexturedQuad},
     scene::{render_scene, Scene, VideoRenderer},
     vrinfo::VRInfo,
@@ -128,8 +128,8 @@ pub struct Global {
     mpv: Box<libmpv::Context>,
 
     // imgui
-    video_settings: VideoSettings,
-    file_browser: ImguiFileBrowser,
+    imgui_general: General,
+    imgui_file_browser: ImguiFileBrowser,
     imgui_renderer: imgui_wgpu::Renderer,
     imgui: imgui::Context,
 
@@ -518,14 +518,13 @@ impl Global {
         //---------------------------------------------------------------------------------
 
         let mut filedb = FileDB::load();
-        let file_browser = ImguiFileBrowser::new(&mut filedb);
-        let video_settings = VideoSettings::new();
+        let imgui_file_browser = ImguiFileBrowser::new(&mut filedb);
+        let imgui_general = General::new();
         let cam_quat = Quat::IDENTITY;
         let cam_pos = Vec3::new(0.0, 0.0, 0.0);
         let proj_mat = Mat4::perspective_lh(90f32.to_radians(), w as f32 / h as f32, 0.01, 100.0);
         let view_mat = Mat4::from_rotation_translation(cam_quat.inverse(), -cam_pos);
-        let camera_state =
-            CameraState::from_proj_and_view(proj_mat, view_mat, Mat4::IDENTITY, 0, None, &video_settings);
+        let camera_state = CameraState::from_proj_and_view(proj_mat, view_mat, Mat4::IDENTITY, 0, None, &imgui_general);
         let time = Instant::now();
         let sdl_event_pump = sdl_context.event_pump().unwrap();
         let swap_z = Mat4::from_scale(Vec3::new(1.0, 1.0, -1.0));
@@ -548,8 +547,8 @@ impl Global {
             sdl_event_pump,
             imgui,
             imgui_renderer,
-            file_browser,
-            video_settings,
+            imgui_file_browser,
+            imgui_general,
             mpv,
             mpv_render,
             gpu,
@@ -688,8 +687,8 @@ impl Global {
                     _ => {}
                 },
                 libmpv::Event::Property(p) => match (p.name.as_ref(), p.value) {
-                    ("hwdec-current", libmpv::PropertyValue::String(v)) => self.video_settings.hwdec_current = v,
-                    ("hwdec", libmpv::PropertyValue::String(v)) => self.video_settings.hwdec = v,
+                    ("hwdec-current", libmpv::PropertyValue::String(v)) => self.imgui_general.hwdec_current = v,
+                    ("hwdec", libmpv::PropertyValue::String(v)) => self.imgui_general.hwdec = v,
                     ("path", libmpv::PropertyValue::String(v)) => self.on_mpv_file_loaded(v),
                     ("width", libmpv::PropertyValue::I64(v)) => self.async_size.0 = Some(v as u32),
                     ("height", libmpv::PropertyValue::I64(v)) => self.async_size.1 = Some(v as u32),
@@ -716,7 +715,7 @@ impl Global {
                         self.mpv.get_aid_async();
                         self.mpv.get_sid_async();
                     }
-                    ("pause", libmpv::PropertyValue::Bool(v)) => self.video_settings.playing = !v, // this one is purely visual
+                    ("pause", libmpv::PropertyValue::Bool(v)) => self.imgui_general.playing = !v, // this one is purely visual
                     _ => {}
                 },
             }
@@ -739,12 +738,12 @@ impl Global {
     }
 
     pub fn on_mpv_duration_changed(&mut self, v: u32) {
-        self.video_settings.duration = v;
+        self.imgui_general.duration = v;
         self.current_file_duration = Some(v);
     }
 
     pub fn on_mpv_percent_pos_change(&mut self, v: f64) {
-        self.video_settings.percent_pos = v;
+        self.imgui_general.percent_pos = v;
         if let Some(key) = self.current_file_key {
             let e = self.filedb.get_file_mut(key);
             e.mark_as_seen(v);
@@ -834,7 +833,7 @@ impl Global {
                 self.world_origin,
                 0,
                 fdata,
-                &self.video_settings,
+                &self.imgui_general,
             );
             self.gpu.queue.write_buffer(
                 &self.camera_state_uniform_buf,
@@ -857,7 +856,7 @@ impl Global {
                 self.world_origin,
                 1,
                 fdata,
-                &self.video_settings,
+                &self.imgui_general,
             );
             self.gpu.queue.write_buffer(
                 &self.camera_state_uniform_buf,
@@ -879,7 +878,7 @@ impl Global {
             self.world_origin,
             0,
             fdata,
-            &self.video_settings,
+            &self.imgui_general,
         );
         self.gpu.queue.write_buffer(
             &self.camera_state_uniform_buf,
@@ -900,7 +899,7 @@ impl Global {
             let hw = (w - (3.0 * gap)) / 2.0;
             let x0 = gap;
             let x1 = gap + hw + gap;
-            self.file_browser.render(
+            self.imgui_file_browser.render(
                 &mut self.action_bin,
                 &mut self.config_syncer,
                 &mut self.filedb,
@@ -910,7 +909,7 @@ impl Global {
             );
             {
                 let fdata = self.current_file_key.map(|k| self.filedb.get_file_mut(k));
-                self.video_settings.render(
+                self.imgui_general.render(
                     &mut self.action_bin,
                     &mut self.config_syncer,
                     self.current_file_tracks.as_ref(),
@@ -1032,7 +1031,8 @@ impl Global {
 
             if self.is_gui {
                 // gui only events
-                self.vscreen.imgui_handle_event(&mut self.imgui, &event);
+                self.vscreen
+                    .imgui_handle_event(&mut self.imgui, &event, &self.config_syncer.get());
             } else {
                 // non-gui only events
                 match event {
@@ -1087,12 +1087,14 @@ impl Global {
                 let forward_vec = cam_mat.z_axis.truncate();
                 let right_vec = cam_mat.x_axis.truncate();
 
-                self.cam_pos += forward_vec * Vec3::splat(self.delta.as_secs_f32() * 5.0) * motion.y;
-                self.cam_pos += right_vec * Vec3::splat(self.delta.as_secs_f32() * 5.0) * motion.x;
+                let speed = self.config_syncer.get().camera_movement_speed;
+                self.cam_pos += forward_vec * Vec3::splat(self.delta.as_secs_f32() * speed) * motion.y;
+                self.cam_pos += right_vec * Vec3::splat(self.delta.as_secs_f32() * speed) * motion.x;
             }
             if xrel_accum != 0 || yrel_accum != 0 {
-                let vrot = Quat::from_rotation_x((yrel_accum as f32 * 0.05).to_radians());
-                let hrot = Quat::from_rotation_y((xrel_accum as f32 * 0.05).to_radians());
+                let sens = self.config_syncer.get().camera_sensitivity;
+                let vrot = Quat::from_rotation_x((yrel_accum as f32 * sens).to_radians());
+                let hrot = Quat::from_rotation_y((xrel_accum as f32 * sens).to_radians());
                 // let hrot = Quat::IDENTITY;
                 self.cam_quat = (hrot * (self.cam_quat * vrot)).normalize();
             }
