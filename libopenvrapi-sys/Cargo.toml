@@ -1,0 +1,12 @@
+[package]
+name = "libopenvrapi-sys"
+version = "0.1.0"
+build = "build.rs"
+edition = "2021"
+
+[dependencies]
+libc = "0.2.112"
+
+[build-dependencies]
+cc = { version = "1.0.72", features = ["parallel"] }
+pkg-config = "0.3.24"

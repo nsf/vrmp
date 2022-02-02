@@ -1,0 +1,12 @@
+[package]
+name = "libopenvr"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sys = { package = "libopenvrapi-sys",  path = "../libopenvrapi-sys" }
+log = "0.4.14"
+glam = "0.20.2"
+ash = "0.34"
+lazy_static = "1.4.0"
+elsa = "1.5.0"

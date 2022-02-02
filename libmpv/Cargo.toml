@@ -1,0 +1,11 @@
+[package]
+name = "libmpv"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sys = { package = "libmpv-sys",  path = "../libmpv-sys" }
+log = "0.4.14"
+khronos-egl = "4.1.0"
+sdl2 = { git = "https://github.com/Rust-SDL2/rust-sdl2", features = ["raw-window-handle"] }
+sdl2-sys = { git = "https://github.com/Rust-SDL2/rust-sdl2" }

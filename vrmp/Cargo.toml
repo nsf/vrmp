@@ -1,0 +1,43 @@
+[package]
+name = "vrmp"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sdl2 = { git = "https://github.com/Rust-SDL2/rust-sdl2", features = ["raw-window-handle"] }
+sdl2-sys = { git = "https://github.com/Rust-SDL2/rust-sdl2" }
+env_logger = "0.9.0"
+log = "0.4.14"
+glam = { version = "0.20.2", features = ["bytemuck"] }
+slotmap = "1.0.6"
+regex = "1.5.4"
+memoffset = "0.6.5"
+strum = "0.23"
+strum_macros = "0.23"
+openxr = "0.15.5"
+glx = "0.2.6"
+itertools = "0.10.3"
+wgpu = "0.12.0"
+wgpu-hal = "0.12.2"
+ash = "0.34"
+pollster = "0.2.4"
+raw-window-handle = "0.4.2"
+bytemuck = "1.7.3"
+bytemuck_derive = "1.0.1"
+khronos-egl = "4.1.0"
+imgui-wgpu = "0.19.0"
+imgui = "0.8.2"
+argh = "0.1.7"
+xdg = "2.4.0"
+ron = "0.7"
+anyhow = "1.0.53"
+indoc = "1.0.3"
+fxhash = "0.2.1"
+rusqlite = "0.26.3"
+serde = { version = "1", features = ["derive"] }
+libopenvr = { path = "../libopenvr" }
+libmpv = { path = "../libmpv" }
+gl = { package = "libgl", path = "../libgl" }
+
+[build-dependencies]
+tera = "1.15.0"

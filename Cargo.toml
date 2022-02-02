@@ -1,0 +1,11 @@
+[workspace]
+
+resolver = "2"
+members = [
+  "libopenvrapi-sys",
+  "libmpv-sys",
+  "libopenvr",
+  "libmpv",
+  "libgl",
+  "vrmp",
+]
