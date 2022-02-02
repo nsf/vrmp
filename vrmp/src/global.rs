@@ -50,6 +50,10 @@ pub struct Arguments {
     #[argh(switch)]
     /// enable VR mode (will initialize and use openvr library)
     pub vr: bool,
+
+    #[argh(switch)]
+    /// enable vulkan debug and validation layers
+    pub validation_layers: bool,
 }
 
 pub struct Global {
@@ -191,7 +195,7 @@ impl Global {
                     max_push_constant_size: 4 * 4 * 4, // I want to push mat4x4
                     ..Default::default()
                 },
-                flags: InstanceFlags::all(),
+                flags: cond!(args.validation_layers, InstanceFlags::all(), InstanceFlags::empty()),
             })
         };
 
