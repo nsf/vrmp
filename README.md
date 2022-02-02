@@ -14,7 +14,7 @@ Some details:
  - Vulkan wgpu-hal hacks are used to talk to openvr.
  - Uses imgui for gui.
  - Mouse and keyboard only for now.
- - Fully functional without VR device (in fact --vr option enabled VR, runs w/o VR by default).
+ - Fully functional without VR device (in fact --vr option enables VR, runs w/o VR by default).
  - When w/o VR use WASD and mouse to navigate.
  - Right click to show the UI.
  - Spacebar to reset origin.
