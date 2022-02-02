@@ -104,6 +104,11 @@ impl VScreen {
         }
     }
 
+    fn clamp_mouse_position(&mut self) {
+        self.mouse_x = self.mouse_x.clamp(0.0, self.width as f32);
+        self.mouse_y = self.mouse_y.clamp(0.0, self.height as f32);
+    }
+
     pub fn imgui_handle_event(&mut self, context: &mut imgui::Context, event: &Event) {
         let io = context.io_mut();
 
@@ -111,6 +116,7 @@ impl VScreen {
             Event::MouseMotion { xrel, yrel, .. } => {
                 self.mouse_x += xrel as f32;
                 self.mouse_y += yrel as f32;
+                self.clamp_mouse_position();
             }
 
             Event::MouseWheel { x, y, .. } => {
@@ -169,6 +175,7 @@ impl VScreen {
         if io.want_set_mouse_pos {
             self.mouse_x = io.mouse_pos[0];
             self.mouse_y = io.mouse_pos[1];
+            self.clamp_mouse_position();
         }
         io.mouse_pos = [self.mouse_x, self.mouse_y];
     }
