@@ -37,6 +37,23 @@ fn reset_origin(cam_mat: Mat4) -> Mat4 {
     return Mat4::from_translation(tr) * Mat4::from_rotation_y(y);
 }
 
+fn create_depth_texture(device: &wgpu::Device, w: u32, h: u32) -> wgpu::TextureView {
+    let depth_texture = device.create_texture(&wgpu::TextureDescriptor {
+        label: None,
+        size: wgpu::Extent3d {
+            width: w,
+            height: h,
+            ..Default::default()
+        },
+        mip_level_count: 1,
+        sample_count: 1,
+        dimension: wgpu::TextureDimension::D2,
+        format: wgpu::TextureFormat::Depth32Float,
+        usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+    });
+    depth_texture.create_view(&wgpu::TextureViewDescriptor::default())
+}
+
 #[repr(C)]
 #[derive(Copy, Clone, Pod, Zeroable)]
 struct LineVertex {
@@ -162,7 +179,11 @@ impl Global {
         let sdl_context = sdl2::init().unwrap();
         let sdl_video_subsystem = sdl_context.video().unwrap();
 
-        let sdl_window = sdl_video_subsystem.window("vrmp", 1920, 1080).build().unwrap();
+        let sdl_window = sdl_video_subsystem
+            .window("vrmp", 1920, 1080)
+            .resizable()
+            .build()
+            .unwrap();
 
         sdl_context.mouse().show_cursor(false);
         sdl_context.mouse().set_relative_mouse_mode(true);
@@ -339,20 +360,7 @@ impl Global {
             multiview: None,
         });
 
-        let depth_texture = gpu.device.create_texture(&wgpu::TextureDescriptor {
-            label: None,
-            size: wgpu::Extent3d {
-                width: w,
-                height: h,
-                ..Default::default()
-            },
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Depth32Float,
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-        });
-        let depth_view = depth_texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let depth_view = create_depth_texture(&gpu.device, w, h);
 
         //---------------------------------------------------------------------------------
 
@@ -1011,9 +1019,13 @@ impl Global {
             } = event
             {
                 assert!(w > 0 && h > 0);
-                self.surface_config.width = w as u32;
-                self.surface_config.height = h as u32;
+                let w = w as u32;
+                let h = h as u32;
+                self.surface_config.width = w;
+                self.surface_config.height = h;
                 self.gpu.surface.configure(&self.gpu.device, &self.surface_config);
+                self.depth_view = create_depth_texture(&self.gpu.device, w, h);
+                self.proj_mat = Mat4::perspective_lh(90f32.to_radians(), w as f32 / h as f32, 0.01, 100.0);
             } else if let Event::MouseButtonDown {
                 mouse_btn: MouseButton::Right,
                 ..
